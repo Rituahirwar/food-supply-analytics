@@ -51,3 +51,12 @@ yarn-error.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Data and Plots
+*.csv
+*.zip
+*.png
+
+# IDE and Temp
+.vscode/
+git_status.txt
