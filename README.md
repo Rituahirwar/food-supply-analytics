@@ -36,7 +36,7 @@ POSTGRES_PORT=5432
 POSTGRES_DB=fsd_mini_proj
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_postgres_password
-MONGODB_URI=mongodb+srv://project_user:YOUR_PASSWORD@cluster0.yjptugd.mongodb.net/fsd_mini_proj?retryWrites=true&w=majority
+MONGODB_URI=MONGODB_URI=<your_mongodb_connection_string>
 ML_SERVICE_URL=http://127.0.0.1:8000
 ```
 
