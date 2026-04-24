@@ -1,11 +1,24 @@
 const axios = require('axios');
+const NodeCache = require('node-cache');
+const Bottleneck = require('bottleneck');
 const { PredictionLog, QueryLog, RiskAlertLog } = require('../models/SupplyData');
 
+const cache = new NodeCache({ stdTTL: 300 });
+const limiter = new Bottleneck({ maxConcurrent: 1 });
+
 const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
+
 const getPrediction = async (req, res) => {
   try {
-    const response = await axios.get(`${ML_URL}/predict`);
+    const cached = cache.get('prediction');
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
+    const response = await limiter.schedule(() => axios.get(`${ML_URL}/predict`));
     const data = response.data;
+
+    cache.set('prediction', data);
 
     await PredictionLog.create({
       user_id: req.user.id,
@@ -43,12 +56,20 @@ const getRisk = async (req, res) => {
       });
     }
 
+    const cacheKey = `risk_${year || 'latest'}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const mlUrl = year
       ? `${ML_URL}/risk?year=${year}`
       : `${ML_URL}/risk`;
 
-    const response = await axios.get(mlUrl);
+    const response = await limiter.schedule(() => axios.get(mlUrl));
     const data = response.data;
+
+    cache.set(cacheKey, data);
 
     if (!year && data.risk_data) {
       const logsToSave = data.risk_data.map((item) => ({

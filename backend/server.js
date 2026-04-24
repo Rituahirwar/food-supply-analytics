@@ -2,6 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
 const path = require('path');
@@ -12,8 +15,19 @@ const dataRoutes = require('./src/routes/dataRoutes');
 
 const app = express();
 
+app.use(helmet());
+app.use(compression());
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { message: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 app.use(cors());
 app.use(express.json());
+app.use('/api/', limiter);
 
 connectPostgres();
 connectMongo();

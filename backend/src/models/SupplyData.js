@@ -34,10 +34,10 @@ const QueryLogSchema = new mongoose.Schema({
 });
 
 const RiskAlertLogSchema = new mongoose.Schema({
-  country: { type: String, required: true },
+  country: { type: String, required: true, index: true },
   cpi_value: { type: Number },
-  risk_level: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
-  recorded_at: { type: Date, default: Date.now },
+  risk_level: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'], index: true },
+  recorded_at: { type: Date, default: Date.now, index: true },
 });
 
 const PredictionLog = mongoose.model('PredictionLog', PredictionLogSchema);

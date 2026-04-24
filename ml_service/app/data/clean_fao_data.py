@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 input_path = os.path.join(BASE_DIR, "data", "food_price_indices_data.csv")

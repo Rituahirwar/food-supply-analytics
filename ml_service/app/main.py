@@ -79,11 +79,19 @@ def get_cpi_data():
     return pd.read_csv(CPI_DATA_PATH, encoding="latin-1")
 
 
+TRADE_MATRIX_ZIP_PATH = BASE_DIR / "data" / "clean_trade_matrix.zip"
+
 @lru_cache(maxsize=1)
 def get_trade_data():
-    if not TRADE_MATRIX_PATH.exists():
+    if not TRADE_MATRIX_ZIP_PATH.exists():
         return None
-    return pd.read_csv(TRADE_MATRIX_PATH, encoding="latin-1")
+    import zipfile
+    with zipfile.ZipFile(TRADE_MATRIX_ZIP_PATH, 'r') as z:
+        for filename in z.namelist():
+            if filename.endswith('.csv'):
+                with z.open(filename) as f:
+                    return pd.read_csv(f, encoding='latin-1')
+    return None
 
 
 @lru_cache(maxsize=1)
