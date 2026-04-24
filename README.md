@@ -174,7 +174,7 @@ git push
 ### 2) Deploy ML service on Render
 
 - Root Directory: `ml_service`
-- Runtime: Python 3.11
+- Runtime: Python 3.10 (configured via runtime.txt)
 - Build Command: `pip install -r requirements.txt`
 - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
