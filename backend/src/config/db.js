@@ -37,7 +37,10 @@ const connectPostgres = async () => {
 
 const connectMongo = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 8000,
+    });
     console.log('MongoDB connected');
   } catch (err) {
     console.error('MongoDB error:', err.message);

@@ -4,7 +4,7 @@ import useFetch from '../hooks/useFetch';
 import { Settings, Save } from 'lucide-react';
 
 const AdminPanel = () => {
-  const { data: riskData } = useFetch(getRisk);
+  const { data: riskData, loading, error } = useFetch(getRisk);
   const [thresholds, setThresholds] = useState({ critical: 300, high: 150, medium: 110 });
   const [saved, setSaved] = useState(false);
 
@@ -108,6 +108,11 @@ const AdminPanel = () => {
             Showing {reclassified.filter(c => ['CRITICAL', 'HIGH'].includes(c.risk_level)).length} high risk countries
           </p>
         </div>
+        {loading ? (
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Loading analytics...</div>
+        ) : error ? (
+          <div style={{ color: '#fca5a5', fontSize: '0.85rem' }}>{error}</div>
+        ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--panel-border)' }}>
@@ -142,6 +147,7 @@ const AdminPanel = () => {
               ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

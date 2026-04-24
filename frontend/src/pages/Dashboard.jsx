@@ -351,11 +351,6 @@ const Dashboard = ({ selectedYear, setSelectedYear }) => {
                           isHighlighted ? "#fff" : "rgba(255,255,255,0.1)"
                         }
                         strokeWidth={isHighlighted ? 1.5 : 0.5}
-                        style={{
-                          default: { opacity: isHighlighted ? 1 : 0.7 },
-                          hover: { opacity: 1, outline: "none" },
-                          pressed: { outline: "none" },
-                        }}
                         onClick={() => {
                           const found = riskByCountry[geo.properties.name];
                           setHighlightedCountry(

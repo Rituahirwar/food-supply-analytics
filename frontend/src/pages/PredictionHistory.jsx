@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 
 const PredictionHistory = ({ inline = false }) => {
   const { isAuthenticated } = useAuth();
-  const { data, loading } = useFetch(getPredictionHistory);
+  const { data, loading, error } = useFetch(getPredictionHistory);
   const [expanded, setExpanded] = useState(null);
   const reportRef = useRef();
 
@@ -137,6 +137,12 @@ const PredictionHistory = ({ inline = false }) => {
     </div>
   );
 
+  if (error) return (
+    <div style={{ color: '#fca5a5', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
+      {error}
+    </div>
+  );
+
   const historyItems = Array.isArray(data) ? data : [];
 
   if (historyItems.length === 0) return (
@@ -225,3 +231,4 @@ const PredictionHistory = ({ inline = false }) => {
 };
 
 export default PredictionHistory;
+

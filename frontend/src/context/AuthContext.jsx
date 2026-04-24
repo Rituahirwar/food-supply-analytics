@@ -10,8 +10,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      getMe()
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 8000)
+      );
+      Promise.race([getMe(), timeout])
         .then((data) => { if (data && data.email) setUser(data); })
+        .catch(() => { localStorage.removeItem('token'); setUser(null); })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);

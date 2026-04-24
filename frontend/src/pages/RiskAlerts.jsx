@@ -8,7 +8,7 @@ const riskBg = { CRITICAL: 'rgba(239,68,68,0.1)', HIGH: 'rgba(244,63,94,0.1)', M
 const riskOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
 const RiskAlerts = () => {
-  const { data, loading } = useFetch(getRisk);
+  const { data, loading, error } = useFetch(getRisk);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('risk');
   const [page, setPage] = useState(1);
@@ -56,6 +56,8 @@ const RiskAlerts = () => {
       <div className="glass-panel" style={{ flex: 1, overflow: 'auto' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-secondary)' }}>Loading...</div>
+        ) : error ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#fca5a5' }}>{error}</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
