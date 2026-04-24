@@ -147,10 +147,7 @@ const PredictionHistory = ({ inline = false }) => {
 
   if (historyItems.length === 0) return (
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
-      <p style={{ marginBottom: '8px' }}>No prediction history yet.</p>
-      <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-        If you haven't requested any predictions yet, they will appear here once generated.
-      </p>
+      <p>No prediction history yet.</p>
     </div>
   );
 
