@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import load_model
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -98,6 +98,8 @@ def get_trade_data():
 def get_lstm_model():
     if not MODEL_PATH.exists():
         return None
+    # Import TensorFlow lazily so lightweight endpoints do not pay the memory cost.
+    from tensorflow.keras.models import load_model
     return load_model(MODEL_PATH, compile=False)
 
 
@@ -107,21 +109,31 @@ def root():
         "status": "ok",
         "service": "ml_service",
         "model_path_exists": MODEL_PATH.exists(),
-        "food_data_loaded": get_food_price_data() is not None,
-        "cpi_data_loaded": get_cpi_data() is not None,
-        "trade_data_loaded": get_trade_data() is not None,
+        "food_data_available": FOOD_PRICE_DATA_PATH.exists(),
+        "cpi_data_available": CPI_DATA_PATH.exists(),
+        "trade_data_available": TRADE_MATRIX_ZIP_PATH.exists(),
     }
+
+
+@app.head("/")
+def root_head():
+    return Response(status_code=200)
 
 
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "model_loaded": get_lstm_model() is not None,
-        "food_data_loaded": get_food_price_data() is not None,
-        "cpi_data_loaded": get_cpi_data() is not None,
-        "trade_data_loaded": get_trade_data() is not None,
+        "model_path_exists": MODEL_PATH.exists(),
+        "food_data_available": FOOD_PRICE_DATA_PATH.exists(),
+        "cpi_data_available": CPI_DATA_PATH.exists(),
+        "trade_data_available": TRADE_MATRIX_ZIP_PATH.exists(),
     }
+
+
+@app.head("/health")
+def health_head():
+    return Response(status_code=200)
 
 
 @app.get("/predict")
