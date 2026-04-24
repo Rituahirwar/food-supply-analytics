@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
 const path = require('path');
+const axios = require('axios');
 const { connectPostgres, connectMongo } = require('./src/config/db');
 
 const authRoutes = require('./src/routes/authRoutes');
@@ -32,13 +33,34 @@ app.use('/api/', limiter);
 connectPostgres();
 connectMongo();
 
+const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
+console.log(`[STARTUP] ML_SERVICE_URL configured as: ${ML_URL}`);
+
+// Health endpoint that checks ML connectivity too
+app.get('/health', async (req, res) => {
+  let mlStatus = 'unknown';
+  try {
+    const resp = await axios.get(`${ML_URL}/health`, { timeout: 5000 });
+    mlStatus = resp.status === 200 ? 'ok' : `unexpected ${resp.status}`;
+  } catch (err) {
+    mlStatus = `error: ${err.code || err.message}`;
+  }
+
+  res.json({
+    status: 'ok',
+    service: 'express_backend',
+    ml_service_url: ML_URL,
+    ml_status: mlStatus,
+  });
+});
+
 const swaggerDoc = yaml.load(path.join(__dirname, './src/docs/swagger.yaml'));
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 
-app.get('/', (req, res) => res.json({ status: 'ok', service: 'express_backend' }));
+app.get('/', (req, res) => res.json({ status: 'ok', service: 'express_backend', ml_url: ML_URL }));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
