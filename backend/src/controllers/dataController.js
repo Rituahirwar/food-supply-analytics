@@ -61,10 +61,8 @@ const getPredictionHistory = async (req, res) => {
     res.status(200).json(logs);
   } catch (err) {
     console.error('[getPredictionHistory ERROR]', err.message);
-    res.status(500).json({
-      message: 'Failed to load prediction history.',
-      detail: err.message,
-    });
+    // Return empty array so frontend doesn't crash trying to .map() a non-array
+    res.status(200).json([]);
   }
 };
 
@@ -185,4 +183,3 @@ module.exports = {
   getFoodPrices,
   getTradeData,
 };
-
