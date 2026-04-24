@@ -12,6 +12,12 @@ const warnLogFailure = (label, err) => {
   console.warn(`${label} log skipped: ${err.message}`);
 };
 
+const getErrorMessage = (err, fallback = 'Request failed') =>
+  err.response?.data?.message ||
+  err.response?.data?.detail ||
+  err.message ||
+  fallback;
+
 const getPrediction = async (req, res) => {
   try {
     const cached = cache.get('prediction');
@@ -37,7 +43,12 @@ const getPrediction = async (req, res) => {
 
     res.status(200).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[getPrediction ERROR]', err.message, err.code || '');
+    res.status(502).json({
+      message: 'ML service unreachable or returned an error.',
+      detail: err.message,
+      ml_url: ML_URL,
+    });
   }
 };
 
@@ -99,7 +110,12 @@ const getRisk = async (req, res) => {
 
     res.status(200).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[getRisk ERROR]', err.message, err.code || '');
+    res.status(502).json({
+      message: 'ML service unreachable or returned an error.',
+      detail: err.message,
+      ml_url: ML_URL,
+    });
   }
 };
 
@@ -125,7 +141,12 @@ const getFoodPrices = async (req, res) => {
     );
     res.status(200).json(response.data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[getFoodPrices ERROR]', err.message, err.code || '');
+    res.status(502).json({
+      message: 'ML service unreachable or returned an error.',
+      detail: err.message,
+      ml_url: ML_URL,
+    });
   }
 };
 
@@ -143,7 +164,12 @@ const getTradeData = async (req, res) => {
     );
     res.status(200).json(response.data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('[getTradeData ERROR]', err.message, err.code || '');
+    res.status(502).json({
+      message: 'ML service unreachable or returned an error.',
+      detail: err.message,
+      ml_url: ML_URL,
+    });
   }
 };
 
