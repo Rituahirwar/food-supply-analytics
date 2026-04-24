@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -16,6 +17,11 @@ MODEL_PATH = PROJECT_ROOT / "models" / "lstm_model.h5"
 FOOD_PRICE_DATA_PATH = BASE_DIR / "data" / "clean_food_price_indices.csv"
 CPI_DATA_PATH = BASE_DIR / "data" / "clean_consumer_price_indices.csv"
 TRADE_MATRIX_PATH = BASE_DIR / "data" / "clean_trade_matrix.csv"
+RUNNING_ON_RENDER = os.getenv("RENDER", "").lower() == "true"
+ENABLE_LSTM_MODEL = os.getenv(
+    "ENABLE_LSTM_MODEL",
+    "false" if RUNNING_ON_RENDER else "true",
+).lower() == "true"
 
 app = FastAPI(title="Food Supply Chain Disruption Analyzer", version="1.0.0")
 
@@ -96,11 +102,16 @@ def get_trade_data():
 
 @lru_cache(maxsize=1)
 def get_lstm_model():
-    if not MODEL_PATH.exists():
+    if not ENABLE_LSTM_MODEL or not MODEL_PATH.exists():
         return None
-    # Import TensorFlow lazily so lightweight endpoints do not pay the memory cost.
-    from tensorflow.keras.models import load_model
-    return load_model(MODEL_PATH, compile=False)
+    try:
+        # Import TensorFlow lazily so lightweight endpoints do not pay the memory cost.
+        from tensorflow.keras.models import load_model
+
+        return load_model(MODEL_PATH, compile=False)
+    except Exception as exc:
+        print(f"LSTM model load failed, using fallback forecast: {exc}")
+        return None
 
 
 @app.get("/")
@@ -108,6 +119,7 @@ def root():
     return {
         "status": "ok",
         "service": "ml_service",
+        "lstm_model_enabled": ENABLE_LSTM_MODEL,
         "model_path_exists": MODEL_PATH.exists(),
         "food_data_available": FOOD_PRICE_DATA_PATH.exists(),
         "cpi_data_available": CPI_DATA_PATH.exists(),
@@ -124,6 +136,7 @@ def root_head():
 def health():
     return {
         "status": "ok",
+        "lstm_model_enabled": ENABLE_LSTM_MODEL,
         "model_path_exists": MODEL_PATH.exists(),
         "food_data_available": FOOD_PRICE_DATA_PATH.exists(),
         "cpi_data_available": CPI_DATA_PATH.exists(),

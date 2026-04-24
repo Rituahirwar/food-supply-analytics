@@ -8,6 +8,10 @@ const limiter = new Bottleneck({ maxConcurrent: 1 });
 
 const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
 
+const warnLogFailure = (label, err) => {
+  console.warn(`${label} log skipped: ${err.message}`);
+};
+
 const getPrediction = async (req, res) => {
   try {
     const cached = cache.get('prediction');
@@ -20,12 +24,16 @@ const getPrediction = async (req, res) => {
 
     cache.set('prediction', data);
 
-    await PredictionLog.create({
-      user_id: req.user.id,
-      current_price: data.current_prices?.food_price_index,
-      current_prices: data.current_prices,
-      predictions: data.predictions,
-    });
+    try {
+      await PredictionLog.create({
+        user_id: req.user.id,
+        current_price: data.current_prices?.food_price_index,
+        current_prices: data.current_prices,
+        predictions: data.predictions,
+      });
+    } catch (err) {
+      warnLogFailure('Prediction', err);
+    }
 
     res.status(200).json(data);
   } catch (err) {
@@ -49,11 +57,15 @@ const getRisk = async (req, res) => {
     const { country, commodity, year } = req.query;
 
     if (country || commodity) {
-      await QueryLog.create({
-        user_id: req.user.id,
-        country: country || null,
-        commodity: commodity || null,
-      });
+      try {
+        await QueryLog.create({
+          user_id: req.user.id,
+          country: country || null,
+          commodity: commodity || null,
+        });
+      } catch (err) {
+        warnLogFailure('Query', err);
+      }
     }
 
     const cacheKey = `risk_${year || 'latest'}`;
@@ -77,7 +89,11 @@ const getRisk = async (req, res) => {
         cpi_value: item.cpi_value,
         risk_level: item.risk_level,
       }));
-      await RiskAlertLog.insertMany(logsToSave);
+      try {
+        await RiskAlertLog.insertMany(logsToSave);
+      } catch (err) {
+        warnLogFailure('Risk alert', err);
+      }
     }
 
     res.status(200).json(data);
