@@ -1,6 +1,15 @@
 const EXPRESS_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const getToken = () => localStorage.getItem('token');
 
+// Diagnostic: warn if frontend is talking directly to ML service instead of Express backend
+if (EXPRESS_URL.includes('food-supply-analytics-1.onrender.com') || EXPRESS_URL.includes(':8000')) {
+  console.error(
+    '[CONFIG ERROR] VITE_BACKEND_URL points to the ML service (%s). ' +
+    'It should point to the Express backend (e.g. https://food-backend-xxx.onrender.com).',
+    EXPRESS_URL
+  );
+}
+
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${getToken()}`,
