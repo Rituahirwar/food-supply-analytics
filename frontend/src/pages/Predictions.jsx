@@ -4,8 +4,7 @@ import {
   ResponsiveContainer, CartesianGrid, ReferenceLine
 } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, AlertCircle } from 'lucide-react';
-
-const ML_URL = import.meta.env.VITE_ML_URL || 'http://localhost:8000';
+import { getPrediction as fetchPrediction } from '../services/api';
 
 const COMMODITIES = [
   { key: 'food_price_index', label: 'Food Index', color: '#00f0ff' },
@@ -34,6 +33,7 @@ const tooltipStyle = {
 const Predictions = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeLines, setActiveLines] = useState(
     Object.fromEntries(COMMODITIES.map(c => [c.key, true]))
   );
@@ -42,10 +42,36 @@ const Predictions = () => {
   const [compareB, setCompareB] = useState('oils');
 
   useEffect(() => {
-    fetch(`${ML_URL}/predict`)
-      .then(r => r.json())
-      .then(res => { setData(res); setLoading(false); })
-      .catch(() => setLoading(false));
+    let cancelled = false;
+
+    const loadPredictions = async () => {
+      try {
+        const res = await fetchPrediction();
+        if (cancelled) return;
+
+        if (res?.current_prices) {
+          setData(res);
+          setError('');
+          return;
+        }
+
+        setError(res?.message || res?.detail || 'Failed to load prediction data from the deployed API.');
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Failed to load prediction data from the deployed API.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPredictions();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) return (
@@ -56,7 +82,7 @@ const Predictions = () => {
 
   if (!data || !data.current_prices) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-      Failed to load prediction data. Make sure FastAPI is running on port 8000.
+      {error || 'Failed to load prediction data from the deployed API.'}
     </div>
   );
 
