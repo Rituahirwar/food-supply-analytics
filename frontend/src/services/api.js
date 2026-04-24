@@ -15,13 +15,21 @@ const authHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
+const handleResponse = async (res) => {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || data?.detail || `Request failed (${res.status})`);
+  }
+  return data;
+};
+
 export const registerUser = async (name, email, password) => {
   const res = await fetch(`${EXPRESS_URL}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, password }),
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const loginUser = async (email, password) => {
@@ -30,22 +38,22 @@ export const loginUser = async (email, password) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getMe = async () => {
   const res = await fetch(`${EXPRESS_URL}/api/auth/me`, { headers: authHeaders() });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getPrediction = async () => {
   const res = await fetch(`${EXPRESS_URL}/api/data/predict`, { headers: authHeaders() });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getPredictionHistory = async () => {
   const res = await fetch(`${EXPRESS_URL}/api/data/predict/history`, { headers: authHeaders() });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getRisk = async (year = '') => {
@@ -53,7 +61,7 @@ export const getRisk = async (year = '') => {
     ? `${EXPRESS_URL}/api/data/risk?year=${encodeURIComponent(year)}`
     : `${EXPRESS_URL}/api/data/risk`;
   const res = await fetch(url, { headers: authHeaders() });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getRiskHistory = async (country = '') => {
@@ -61,7 +69,7 @@ export const getRiskHistory = async (country = '') => {
     ? `${EXPRESS_URL}/api/data/risk/history?country=${country}`
     : `${EXPRESS_URL}/api/data/risk/history`;
   const res = await fetch(url, { headers: authHeaders() });
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateRiskThresholds = async (thresholds) => {
@@ -70,16 +78,15 @@ export const updateRiskThresholds = async (thresholds) => {
     headers: authHeaders(),
     body: JSON.stringify(thresholds),
   });
-  return res.json();
+  return handleResponse(res);
 };
 
-// These call FastAPI directly — no auth needed
 export const getFoodPrices = async (commodity = 'Cereals') => {
   const res = await fetch(
     `${EXPRESS_URL}/api/data/food-prices?commodity=${encodeURIComponent(commodity)}`,
     { headers: authHeaders() }
   );
-  return res.json();
+  return handleResponse(res);
 };
 
 export const getTradeData = async (country, commodity = 'Cereals') => {
@@ -87,5 +94,5 @@ export const getTradeData = async (country, commodity = 'Cereals') => {
     `${EXPRESS_URL}/api/data/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`,
     { headers: authHeaders() }
   );
-  return res.json();
+  return handleResponse(res);
 };

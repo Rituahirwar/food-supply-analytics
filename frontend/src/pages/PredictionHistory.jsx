@@ -149,8 +149,7 @@ const PredictionHistory = ({ inline = false }) => {
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
       <p style={{ marginBottom: '8px' }}>No prediction history yet.</p>
       <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-        If you already fetched a prediction, the database may be disconnected.
-        Check that MONGODB_URI is set in your backend environment variables.
+        If you haven't requested any predictions yet, they will appear here once generated.
       </p>
     </div>
   );
