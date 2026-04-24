@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 
 const PredictionHistory = ({ inline = false }) => {
   const { isAuthenticated } = useAuth();
-  const { data, loading, error } = useFetch(getPredictionHistory);
+  const { data, loading } = useFetch(getPredictionHistory);
   const [expanded, setExpanded] = useState(null);
   const reportRef = useRef();
 
@@ -137,23 +137,15 @@ const PredictionHistory = ({ inline = false }) => {
     </div>
   );
 
-  if (error) return (
-    <div style={{ color: '#fca5a5', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
-      {error}
-    </div>
-  );
-
-  const historyItems = Array.isArray(data) ? data : [];
-
-  if (historyItems.length === 0) return (
+  if (!data || data.length === 0) return (
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
-      <p>No prediction history yet.</p>
+      No prediction history yet. Go to Dashboard and fetch a prediction first.
     </div>
   );
 
   return (
     <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...(inline ? {} : { height: '100%', overflowY: 'auto' }) }}>
-      {historyItems.map((item, idx) => (
+      {(data || []).map((item, idx) => (
         <div key={idx} className="glass-panel" style={{ overflow: 'hidden' }}>
 
           <div
@@ -231,4 +223,3 @@ const PredictionHistory = ({ inline = false }) => {
 };
 
 export default PredictionHistory;
-
