@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import "./Topbar.css";
 
 const COMMODITIES = ["Cereals", "Oils", "Sugar", "Dairy", "Meat"];
@@ -236,9 +236,6 @@ const Topbar = ({
           ))}
         </div>
 
-        <button className="settings-btn">
-          <SlidersHorizontal size={16} />
-        </button>
       </div>
     </header>
   );

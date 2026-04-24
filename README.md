@@ -118,6 +118,15 @@ node server.js
 
 ## 4) Frontend
 
+The frontend now reads API endpoints from Vite environment variables. Create `frontend/.env.local` for local development:
+
+```env
+VITE_BACKEND_URL=http://localhost:5000
+VITE_ML_URL=http://127.0.0.1:8000
+```
+
+Then run:
+
 ```bash
 cd frontend
 npm install
@@ -149,6 +158,69 @@ node server.js
 cd frontend
 npm run dev
 ```
+
+## Deployment
+
+This repo is ready to deploy from GitHub. Use Render for the backend and ML service, and Vercel for the frontend.
+
+### 1) Push the current repo
+
+```bash
+git add .
+git commit -m "Deploy-ready config"
+git push
+```
+
+### 2) Deploy ML service on Render
+
+- Root Directory: `ml_service`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+Test:
+
+`https://<your-ml-service>.onrender.com/health`
+
+### 3) Deploy backend on Render
+
+- Root Directory: `backend`
+- Build Command: `npm install`
+- Start Command: `npm start`
+
+Environment variables:
+
+```env
+PORT=10000
+JWT_SECRET=replace_with_strong_secret
+JWT_EXPIRES_IN=7d
+POSTGRES_HOST=<your-postgres-host>
+POSTGRES_PORT=5432
+POSTGRES_DB=<your-postgres-db>
+POSTGRES_USER=<your-postgres-user>
+POSTGRES_PASSWORD=<your-postgres-password>
+MONGODB_URI=<your-mongodb-uri>
+ML_SERVICE_URL=https://<your-ml-service>.onrender.com
+```
+
+Test:
+
+`https://<your-backend>.onrender.com/api/data/predict`
+
+### 4) Deploy frontend on Vercel
+
+- Root Directory: `frontend`
+- Framework Preset: Vite
+- Build Command: `npm install && npm run build`
+- Output Directory: `dist`
+
+Environment variables:
+
+```env
+VITE_BACKEND_URL=https://<your-backend>.onrender.com
+VITE_ML_URL=https://<your-ml-service>.onrender.com
+```
+
+Test: open your Vercel URL and verify the app loads.
 
 ## End-to-End Workflow
 

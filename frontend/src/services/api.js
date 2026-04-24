@@ -1,5 +1,5 @@
-const EXPRESS_URL = 'http://localhost:5000';
-const ML_URL = 'http://localhost:8000';
+const EXPRESS_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const ML_URL = import.meta.env.VITE_ML_URL || 'http://localhost:8000';
 
 const getToken = () => localStorage.getItem('token');
 

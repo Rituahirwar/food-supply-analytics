@@ -175,8 +175,8 @@ def predict():
     dairy_pred = simple_forecast("Dairy")
     sugar_pred = simple_forecast("Sugar")
 
-    # Historical — last 36 months
-    hist = data.tail(36).copy()
+    # Historical — full available series (frontend applies 1Y/3Y/5Y/All filters)
+    hist = data.copy()
     historical = []
     for _, row in hist.iterrows():
         historical.append({

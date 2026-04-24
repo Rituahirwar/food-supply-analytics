@@ -65,6 +65,8 @@ git_status.txt
 # ML Models (too large)
 *.h5
 *.keras
+!ml_service/models/
+!ml_service/models/lstm_model.h5
 
 # Raw data files (too large)
 ml_service/app/data/raw/
