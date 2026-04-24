@@ -48,7 +48,8 @@ const getPredictionHistory = async (req, res) => {
       .limit(10);
     res.status(200).json(logs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    warnLogFailure('Prediction history', err);
+    res.status(200).json([]);
   }
 };
 
@@ -111,8 +112,46 @@ const getRiskHistory = async (req, res) => {
       .limit(50);
     res.status(200).json(logs);
   } catch (err) {
+    warnLogFailure('Risk history', err);
+    res.status(200).json([]);
+  }
+};
+
+const getFoodPrices = async (req, res) => {
+  try {
+    const commodity = req.query.commodity || 'Cereals';
+    const response = await limiter.schedule(() =>
+      axios.get(`${ML_URL}/food-prices?commodity=${encodeURIComponent(commodity)}`)
+    );
+    res.status(200).json(response.data);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-module.exports = { getPrediction, getPredictionHistory, getRisk, getRiskHistory };
+const getTradeData = async (req, res) => {
+  try {
+    const { country, commodity = 'Cereals' } = req.query;
+    if (!country) {
+      return res.status(400).json({ message: 'country is required' });
+    }
+
+    const response = await limiter.schedule(() =>
+      axios.get(
+        `${ML_URL}/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`
+      )
+    );
+    res.status(200).json(response.data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getPrediction,
+  getPredictionHistory,
+  getRisk,
+  getRiskHistory,
+  getFoodPrices,
+  getTradeData,
+};

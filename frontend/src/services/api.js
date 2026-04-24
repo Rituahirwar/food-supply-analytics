@@ -1,6 +1,4 @@
 const EXPRESS_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-const ML_URL = import.meta.env.VITE_ML_URL || 'http://localhost:8000';
-
 const getToken = () => localStorage.getItem('token');
 
 const authHeaders = () => ({
@@ -68,13 +66,17 @@ export const updateRiskThresholds = async (thresholds) => {
 
 // These call FastAPI directly — no auth needed
 export const getFoodPrices = async (commodity = 'Cereals') => {
-  const res = await fetch(`${ML_URL}/food-prices?commodity=${encodeURIComponent(commodity)}`);
+  const res = await fetch(
+    `${EXPRESS_URL}/api/data/food-prices?commodity=${encodeURIComponent(commodity)}`,
+    { headers: authHeaders() }
+  );
   return res.json();
 };
 
 export const getTradeData = async (country, commodity = 'Cereals') => {
   const res = await fetch(
-    `${ML_URL}/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`
+    `${EXPRESS_URL}/api/data/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`,
+    { headers: authHeaders() }
   );
   return res.json();
 };

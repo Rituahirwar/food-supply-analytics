@@ -4,6 +4,8 @@ const {
   getPredictionHistory,
   getRisk,
   getRiskHistory,
+  getFoodPrices,
+  getTradeData,
 } = require('../controllers/dataController');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -13,6 +15,8 @@ router.get('/predict', authMiddleware, getPrediction);
 router.get('/predict/history', authMiddleware, getPredictionHistory);
 router.get('/risk', authMiddleware, getRisk);
 router.get('/risk/history', authMiddleware, getRiskHistory);
+router.get('/food-prices', authMiddleware, getFoodPrices);
+router.get('/trade', authMiddleware, getTradeData);
 
 router.post('/thresholds', authMiddleware, async (req, res) => {
   try {

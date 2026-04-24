@@ -137,7 +137,9 @@ const PredictionHistory = ({ inline = false }) => {
     </div>
   );
 
-  if (!data || data.length === 0) return (
+  const historyItems = Array.isArray(data) ? data : [];
+
+  if (historyItems.length === 0) return (
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
       No prediction history yet. Go to Dashboard and fetch a prediction first.
     </div>
@@ -145,7 +147,7 @@ const PredictionHistory = ({ inline = false }) => {
 
   return (
     <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...(inline ? {} : { height: '100%', overflowY: 'auto' }) }}>
-      {(data || []).map((item, idx) => (
+      {historyItems.map((item, idx) => (
         <div key={idx} className="glass-panel" style={{ overflow: 'hidden' }}>
 
           <div
