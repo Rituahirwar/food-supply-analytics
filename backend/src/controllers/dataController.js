@@ -37,8 +37,9 @@ const getPrediction = async (req, res) => {
         current_prices: data.current_prices,
         predictions: data.predictions,
       });
+      console.log('[MongoDB] PredictionLog saved for user', req.user.id);
     } catch (err) {
-      warnLogFailure('Prediction', err);
+      console.error('[MongoDB Save FAILED]', err.message);
     }
 
     res.status(200).json(data);
@@ -59,8 +60,11 @@ const getPredictionHistory = async (req, res) => {
       .limit(10);
     res.status(200).json(logs);
   } catch (err) {
-    warnLogFailure('Prediction history', err);
-    res.status(200).json([]);
+    console.error('[getPredictionHistory ERROR]', err.message);
+    res.status(500).json({
+      message: 'Failed to load prediction history.',
+      detail: err.message,
+    });
   }
 };
 
@@ -181,3 +185,4 @@ module.exports = {
   getFoodPrices,
   getTradeData,
 };
+
