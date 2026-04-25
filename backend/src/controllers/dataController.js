@@ -9,7 +9,7 @@ const limiter = new Bottleneck({ maxConcurrent: 15 });
 const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 
 // Axios instance with timeout so Render doesn't 502 before we respond
-const mlAxios = axios.create({ timeout: 15000, headers: { 'Accept': 'application/json' } });
+const mlAxios = axios.create({ timeout: 60000, headers: { 'Accept': 'application/json' } });
 
 const warnLogFailure = (label, err) => {
   console.warn(`${label} log skipped: ${err.message}`);
