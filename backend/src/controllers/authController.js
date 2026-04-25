@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { LoginLog } = require('../models/SupplyData');
 
 const register = async (req, res) => {
   try {
@@ -50,6 +51,12 @@ const login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    try {
+      await LoginLog.create({ user_id: user.id, email: user.email });
+    } catch (logErr) {
+      console.warn('Failed to save login log:', logErr.message);
+    }
+
     res.status(200).json({
       message: 'Login successful',
       token,
@@ -71,4 +78,15 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+const getLoginHistory = async (req, res) => {
+  try {
+    const logs = await LoginLog.find({ user_id: req.user.id })
+      .sort({ logged_in_at: -1 })
+      .limit(50);
+    res.status(200).json(logs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { register, login, getMe, getLoginHistory };

@@ -33,7 +33,7 @@ app.use('/api/', limiter);
 connectPostgres();
 connectMongo();
 
-const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
+const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 console.log(`[STARTUP] ML_SERVICE_URL configured as: ${ML_URL}`);
 
 // Health endpoint that checks ML connectivity too

@@ -72,6 +72,9 @@ const Dashboard = ({ selectedYear, setSelectedYear }) => {
         if (nextYear && nextYear !== selectedYear) {
           setSelectedYear(nextYear);
         }
+      } catch (err) {
+        if (!isMounted) return;
+        console.error("Failed to load initial risk data:", err);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -93,6 +96,9 @@ const Dashboard = ({ selectedYear, setSelectedYear }) => {
     getRisk(selectedYear)
       .then((risk) => {
         if (isMounted) setRiskData(risk);
+      })
+      .catch((err) => {
+        if (isMounted) console.error("Failed to load risk data for year:", err);
       })
       .finally(() => {
         if (isMounted) setRiskLoading(false);

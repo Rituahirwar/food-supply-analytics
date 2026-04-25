@@ -56,10 +56,10 @@ const Predictions = () => {
           return;
         }
 
-        setError(res?.message || res?.detail || 'Failed to load prediction data from the deployed API.');
+        setError('Service temporarily unavailable. Please try again later.');
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || 'Failed to load prediction data from the deployed API.');
+          setError('Service temporarily unavailable. Please try again later.');
         }
       } finally {
         if (!cancelled) {
@@ -187,7 +187,7 @@ const Predictions = () => {
 
   if (!data || !data.current_prices) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-      {error || 'Failed to load prediction data from the deployed API.'}
+      {error || 'Service temporarily unavailable. Please try again later.'}
     </div>
   );
 

@@ -40,8 +40,15 @@ const RiskAlertLogSchema = new mongoose.Schema({
   recorded_at: { type: Date, default: Date.now, index: true },
 });
 
+const LoginLogSchema = new mongoose.Schema({
+  user_id: { type: String, required: true, index: true },
+  email: { type: String },
+  logged_in_at: { type: Date, default: Date.now },
+});
+
 const PredictionLog = mongoose.model('PredictionLog', PredictionLogSchema);
 const QueryLog = mongoose.model('QueryLog', QueryLogSchema);
 const RiskAlertLog = mongoose.model('RiskAlertLog', RiskAlertLogSchema);
+const LoginLog = mongoose.model('LoginLog', LoginLogSchema);
 
-module.exports = { PredictionLog, QueryLog, RiskAlertLog };
+module.exports = { PredictionLog, QueryLog, RiskAlertLog, LoginLog };

@@ -6,7 +6,7 @@ const { PredictionLog, QueryLog, RiskAlertLog } = require('../models/SupplyData'
 const cache = new NodeCache({ stdTTL: 300 });
 const limiter = new Bottleneck({ maxConcurrent: 1 });
 
-const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
+const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 
 const warnLogFailure = (label, err) => {
   console.warn(`${label} log skipped: ${err.message}`);

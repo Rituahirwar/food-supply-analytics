@@ -46,6 +46,11 @@ export const getMe = async () => {
   return handleResponse(res);
 };
 
+export const getLoginHistory = async () => {
+  const res = await fetch(`${EXPRESS_URL}/api/auth/login-history`, { headers: authHeaders() });
+  return handleResponse(res);
+};
+
 export const getPrediction = async () => {
   const res = await fetch(`${EXPRESS_URL}/api/data/predict`, { headers: authHeaders() });
   return handleResponse(res);

@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { getPredictionHistory } from '../services/api';
+import { getPredictionHistory, getLoginHistory } from '../services/api';
 import useFetch from '../hooks/useFetch';
 import { useAuth } from '../context/AuthContext';
-import { ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, History, LogIn } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 const PredictionHistory = ({ inline = false }) => {
   const { isAuthenticated } = useAuth();
-  const { data, loading } = useFetch(getPredictionHistory);
+  const { data: predData, loading: predLoading } = useFetch(getPredictionHistory);
+  const { data: loginData, loading: loginLoading } = useFetch(getLoginHistory);
   const [expanded, setExpanded] = useState(null);
+  const [activeTab, setActiveTab] = useState('predictions');
   const reportRef = useRef();
 
   const generatePDF = async (item) => {
@@ -127,25 +129,15 @@ const PredictionHistory = ({ inline = false }) => {
   if (!isAuthenticated && !inline) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px' }}>
       <h2 style={{ color: 'var(--text-primary)' }}>Login Required</h2>
-      <p style={{ color: 'var(--text-secondary)' }}>Please login to view your prediction history.</p>
+      <p style={{ color: 'var(--text-secondary)' }}>Please login to view your history.</p>
     </div>
   );
 
-  if (loading) return (
-    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '16px' }}>
-      Loading history...
-    </div>
-  );
+  const renderPredictions = () => {
+    if (predLoading) return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '16px' }}>Loading history...</div>;
+    if (!predData || predData.length === 0) return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>No prediction history yet. Go to Dashboard and fetch a prediction first.</div>;
 
-  if (!data || data.length === 0) return (
-    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: inline ? '8px' : '40px', textAlign: 'center' }}>
-      No prediction history yet. Go to Dashboard and fetch a prediction first.
-    </div>
-  );
-
-  return (
-    <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...(inline ? {} : { height: '100%', overflowY: 'auto' }) }}>
-      {(data || []).map((item, idx) => (
+    return predData.map((item, idx) => (
         <div key={idx} className="glass-panel" style={{ overflow: 'hidden' }}>
 
           <div
@@ -217,7 +209,73 @@ const PredictionHistory = ({ inline = false }) => {
           )}
 
         </div>
-      ))}
+      ));
+  };
+
+  const renderLogins = () => {
+    if (loginLoading) return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '16px' }}>Loading login history...</div>;
+    if (!loginData || loginData.length === 0) return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', padding: '40px', textAlign: 'center' }}>No login history available.</div>;
+
+    return (
+      <div className="glass-panel" style={{ padding: '20px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ padding: '8px', textAlign: 'left', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Login Date & Time</th>
+              <th style={{ padding: '8px', textAlign: 'left', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Account Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loginData.map((log, i) => (
+              <tr key={i} style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <td style={{ padding: '12px 8px', fontSize: '0.85rem' }}>{new Date(log.logged_in_at).toLocaleString()}</td>
+                <td style={{ padding: '12px 8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{log.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  if (inline) {
+    return (
+      <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {renderPredictions()}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', borderBottom: '1px solid var(--panel-border)', paddingBottom: '12px' }}>
+        <button
+          onClick={() => setActiveTab('predictions')}
+          style={{
+            background: 'none', border: 'none', color: activeTab === 'predictions' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+            fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            borderBottom: activeTab === 'predictions' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+            paddingBottom: '4px', marginBottom: '-13px'
+          }}
+        >
+          <History size={16} /> Prediction History
+        </button>
+        <button
+          onClick={() => setActiveTab('logins')}
+          style={{
+            background: 'none', border: 'none', color: activeTab === 'logins' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+            fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            borderBottom: activeTab === 'logins' ? '2px solid var(--accent-cyan)' : '2px solid transparent',
+            paddingBottom: '4px', marginBottom: '-13px'
+          }}
+        >
+          <LogIn size={16} /> Login History
+        </button>
+      </div>
+
+      <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
+        {activeTab === 'predictions' ? renderPredictions() : renderLogins()}
+      </div>
     </div>
   );
 };
