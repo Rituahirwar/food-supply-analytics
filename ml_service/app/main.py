@@ -75,14 +75,31 @@ def normalize_country_name(value: str) -> str:
 def get_food_price_data():
     if not FOOD_PRICE_DATA_PATH.exists():
         return None
-    return pd.read_csv(FOOD_PRICE_DATA_PATH)
+    # Memory-optimized read: parse dates early, use float32 for numeric columns
+    return pd.read_csv(
+        FOOD_PRICE_DATA_PATH,
+        parse_dates=["Date"],
+        dtype={
+            "Food Price Index": "float32",
+            "Cereals": "float32",
+            "Oils": "float32",
+            "Meat": "float32",
+            "Dairy": "float32",
+            "Sugar": "float32",
+        }
+    )
 
 
 @lru_cache(maxsize=1)
 def get_cpi_data():
     if not CPI_DATA_PATH.exists():
         return None
-    return pd.read_csv(CPI_DATA_PATH, encoding="latin-1")
+    return pd.read_csv(
+        CPI_DATA_PATH, 
+        encoding="latin-1",
+        usecols=["Area", "Date", "Value"],
+        dtype={"Area": "category", "Value": "float32"}
+    )
 
 
 TRADE_MATRIX_ZIP_PATH = BASE_DIR / "data" / "clean_trade_matrix.zip"
@@ -96,7 +113,19 @@ def get_trade_data():
         for filename in z.namelist():
             if filename.endswith('.csv'):
                 with z.open(filename) as f:
-                    return pd.read_csv(f, encoding='latin-1')
+                    # Optimize memory usage by reading only necessary columns and using categories
+                    return pd.read_csv(
+                        f, 
+                        encoding='latin-1',
+                        usecols=["Reporter Country", "Partner Country", "Item", "Element", "Value"],
+                        dtype={
+                            "Reporter Country": "category",
+                            "Partner Country": "category",
+                            "Item": "category",
+                            "Element": "category",
+                            "Value": "float32"
+                        }
+                    )
     return None
 
 
@@ -161,8 +190,8 @@ def predict():
     if not required_columns.issubset(food_price_df.columns):
         raise HTTPException(status_code=500, detail=f"Missing columns: {sorted(required_columns)}")
 
-    data = food_price_df.copy()
-    data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
+    # In-place operations avoid creating a full DataFrame copy
+    data = food_price_df
     for col in ["Food Price Index", "Cereals", "Oils", "Meat", "Dairy", "Sugar"]:
         data[col] = pd.to_numeric(data[col], errors="coerce")
     data = data.dropna(subset=["Date", "Food Price Index"]).sort_values("Date")
@@ -209,9 +238,9 @@ def predict():
     sugar_pred = simple_forecast("Sugar")
 
     # Historical — full available series (frontend applies 1Y/3Y/5Y/All filters)
-    hist = data.copy()
+    # Convert to records once to avoid DataFrame copy overhead
     historical = []
-    for _, row in hist.iterrows():
+    for row in data[["Date", "Food Price Index", "Cereals", "Oils", "Meat", "Dairy", "Sugar"]].to_dict("records"):
         historical.append({
             "date": str(row["Date"].date()),
             "food_price_index": round(float(row["Food Price Index"]), 2) if pd.notna(row["Food Price Index"]) else None,
