@@ -94,9 +94,19 @@ def get_trade_data():
         for filename in z.namelist():
             if filename.endswith('.csv'):
                 with z.open(filename) as f:
-                    # Safest, most stable read. 
-                    # Requires ENABLE_LSTM_MODEL=False so it doesn't breach 512MB limit!
-                    return pd.read_csv(f, encoding='latin-1')
+                    valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
+                    
+                    # Safest approach: chunking flattens parsing memory, usecols reduces total memory, 
+                    # and lambda avoids ValueError if a column is missing. No category dtypes used to avoid concat errors.
+                    chunks = []
+                    for chunk in pd.read_csv(
+                        f, 
+                        encoding='latin-1',
+                        usecols=lambda x: x in valid_cols,
+                        chunksize=50000
+                    ):
+                        chunks.append(chunk)
+                    return pd.concat(chunks, ignore_index=True)
     return None
 
 
