@@ -16,12 +16,13 @@ const dataRoutes = require('./src/routes/dataRoutes');
 
 const app = express();
 
+app.set('trust proxy', 1); // Trust Render's load balancer IP
 app.use(helmet());
 app.use(compression());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 500, // Increased limit from 100 to 500
     message: { message: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
