@@ -17,8 +17,8 @@ jobs:
       
       - name: Ping ML Service
         run: |
-          echo "Pinging ML service..."
-          curl -sf https://food-supply-analytics-1.onrender.com/health || echo "ML service ping failed"
+          echo "Warming ML service caches..."
+          curl -sf https://food-supply-analytics-1.onrender.com/warmup || echo "ML service warmup failed"
       
       - name: Ping Frontend
         run: |

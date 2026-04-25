@@ -134,6 +134,7 @@ const MapView = ({
   const [riskData, setRiskData] = useState({});
   const [availableYears, setAvailableYears] = useState([]);
   const [localYear, setLocalYear] = useState("");
+  const [loadedRiskYear, setLoadedRiskYear] = useState("");
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [tradeRoutes, setTradeRoutes] = useState({ imports: [], exports: [] });
   const [foodPriceData, setFoodPriceData] = useState([]);
@@ -183,6 +184,7 @@ const MapView = ({
           map[item.country] = item;
         });
         setRiskData(map);
+        setLoadedRiskYear(String(data.selected_year || ""));
         const years = Array.isArray(data.timeline_labels)
           ? data.timeline_labels.map(String)
           : [];
@@ -203,7 +205,7 @@ const MapView = ({
   // Refetch risk on year change
   useEffect(() => {
     const yearToUse = selectedYear || localYear;
-    if (!yearToUse) return;
+    if (!yearToUse || String(yearToUse) === String(loadedRiskYear)) return;
     setLoading(true);
     getRisk(yearToUse).then((data) => {
       if (data?.risk_data) {
@@ -212,12 +214,13 @@ const MapView = ({
           map[item.country] = item;
         });
         setRiskData(map);
+        setLoadedRiskYear(String(data.selected_year || yearToUse));
         setMapKey((prev) => prev + 1);
       }
     })
     .catch((err) => console.warn("Failed to load risk for year:", err))
     .finally(() => setLoading(false));
-  }, [selectedYear]);
+  }, [selectedYear, localYear, loadedRiskYear]);
 
   // Refetch trade routes when country or commodity changes
   useEffect(() => {

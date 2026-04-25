@@ -90,10 +90,12 @@ const Dashboard = ({ selectedYear, setSelectedYear }) => {
   }, []);
 
   useEffect(() => {
-    if (!selectedYear || !availableYears.includes(String(selectedYear))) return;
+    const nextYear = String(selectedYear || "");
+    const loadedYear = String(riskData?.selected_year || "");
+    if (!nextYear || !availableYears.includes(nextYear) || nextYear === loadedYear) return;
     let isMounted = true;
     setRiskLoading(true);
-    getRisk(selectedYear)
+    getRisk(nextYear)
       .then((risk) => {
         if (isMounted) setRiskData(risk);
       })
@@ -106,7 +108,7 @@ const Dashboard = ({ selectedYear, setSelectedYear }) => {
     return () => {
       isMounted = false;
     };
-  }, [selectedYear, availableYears]);
+  }, [selectedYear, availableYears, riskData?.selected_year]);
 
   const riskRows = riskData?.risk_data || [];
 
