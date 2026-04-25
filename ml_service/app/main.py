@@ -18,7 +18,7 @@ FOOD_PRICE_DATA_PATH = BASE_DIR / "data" / "clean_food_price_indices.csv"
 CPI_DATA_PATH = BASE_DIR / "data" / "clean_consumer_price_indices.csv"
 TRADE_MATRIX_PATH = BASE_DIR / "data" / "clean_trade_matrix.csv"
 RUNNING_ON_RENDER = os.getenv("RENDER", "").lower() == "true"
-ENABLE_LSTM_MODEL = True
+ENABLE_LSTM_MODEL = False
 
 app = FastAPI(title="Food Supply Chain Disruption Analyzer", version="1.0.0")
 
@@ -93,34 +93,10 @@ def get_trade_data():
     with zipfile.ZipFile(TRADE_MATRIX_ZIP_PATH, 'r') as z:
         for filename in z.namelist():
             if filename.endswith('.csv'):
-                # Read the header first to safely determine column names
-                with z.open(filename) as header_file:
-                    header_line = header_file.readline().decode('latin-1').strip()
-                
-                # Split by comma and clean quotes
-                actual_header = [col.strip('"\'') for col in header_line.split(',')]
-                
-                valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
-                cols_to_use = [c for c in actual_header if c in valid_cols]
-                
-                # Dynamically build category dtypes for extreme memory savings
-                dtype_dict = {}
-                for c in cols_to_use:
-                    if c != "Value": # Let Value parse naturally to avoid ValueError on dirty floats
-                        dtype_dict[c] = "category"
-
                 with z.open(filename) as f:
-                    # Use chunksize to completely eliminate the peak memory spike during parsing!
-                    chunks = []
-                    for chunk in pd.read_csv(
-                        f, 
-                        encoding='latin-1',
-                        usecols=cols_to_use,
-                        dtype=dtype_dict,
-                        chunksize=50000
-                    ):
-                        chunks.append(chunk)
-                    return pd.concat(chunks, ignore_index=True)
+                    # Safest, most stable read. 
+                    # Requires ENABLE_LSTM_MODEL=False so it doesn't breach 512MB limit!
+                    return pd.read_csv(f, encoding='latin-1')
     return None
 
 
