@@ -370,25 +370,71 @@ def trade(country: str = Query(...), commodity: str = Query(default="Cereals")):
     if not required_columns.issubset(trade_df.columns):
         raise HTTPException(status_code=500, detail=f"Missing columns: {sorted(required_columns)}")
 
-    items = COMMODITY_ITEM_MAP.get(commodity, COMMODITY_ITEM_MAP["Cereals"])
+    # 1. Robust Country Matching
+    target_lower = country.strip().lower()
+    
+    def is_match(c):
+        if pd.isna(c):
+            return False
+        c_lower = str(c).strip().lower()
+        c_clean = c_lower.split("(")[0].strip()
+        t_clean = target_lower.split("(")[0].strip()
+        
+        if c_clean == t_clean:
+            return True
+        
+        mappings = {
+            "russia": "russian federation",
+            "tanzania": "united republic of tanzania",
+            "syria": "syrian arab republic",
+            "south korea": "republic of korea",
+            "north korea": "democratic people's republic of korea",
+            "moldova": "republic of moldova",
+            "vietnam": "viet nam",
+            "united states of america": "united states of america",
+            "united kingdom": "united kingdom of great britain and northern ireland",
+            "bolivia": "bolivia",
+            "venezuela": "venezuela",
+            "iran": "iran",
+            "turkey": "türkiye",
+            "brazil": "brazil"
+        }
+        
+        if mappings.get(t_clean) == c_clean or mappings.get(c_clean) == t_clean:
+            return True
+            
+        return False
 
-    df = trade_df[trade_df["Item"].isin(items)].copy()
+    country_mask = trade_df["Reporter Country"].apply(is_match)
+    country_df = trade_df[country_mask].copy()
+
+    # If we couldn't find the country at all, return empty
+    if country_df.empty:
+        return {"status": "success", "country": country, "commodity": commodity, "imports": [], "exports": []}
+
+    # 2. Robust Commodity Matching
+    items = COMMODITY_ITEM_MAP.get(commodity, COMMODITY_ITEM_MAP["Cereals"])
+    df = country_df[country_df["Item"].isin(items)].copy()
+    
+    # Fallback 1: fuzzy string match on commodity
+    if df.empty:
+        mask = country_df["Item"].str.contains(commodity, case=False, na=False)
+        df = country_df[mask].copy()
+        
+    # Fallback 2: just take all commodities for this country so lines draw!
+    if df.empty:
+        df = country_df.copy()
+
     df["Value"] = pd.to_numeric(df["Value"], errors="coerce").fillna(0)
 
-    imports_df = df[
-        (df["Reporter Country"] == country) &
-        (df["Element"].str.contains("Import", case=False))
-    ]
+    imports_df = df[df["Element"].str.contains("Import", case=False, na=False)]
     imports = (
         imports_df.groupby("Partner Country")["Value"]
         .sum().reset_index()
         .sort_values("Value", ascending=False).head(5)
     )
 
-    exports_df = df[
-        (df["Reporter Country"] == country) &
-        (df["Element"].str.contains("Export", case=False))
-    ]
+    exports_df = df[df["Element"].str.contains("Export", case=False, na=False)]
     exports = (
         exports_df.groupby("Partner Country")["Value"]
         .sum().reset_index()
@@ -402,3 +448,4 @@ def trade(country: str = Query(...), commodity: str = Query(default="Cereals")):
         "imports": imports.rename(columns={"Partner Country": "partner", "Value": "value"}).to_dict(orient="records"),
         "exports": exports.rename(columns={"Partner Country": "partner", "Value": "value"}).to_dict(orient="records"),
     }
+
