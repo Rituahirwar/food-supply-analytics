@@ -18,10 +18,7 @@ FOOD_PRICE_DATA_PATH = BASE_DIR / "data" / "clean_food_price_indices.csv"
 CPI_DATA_PATH = BASE_DIR / "data" / "clean_consumer_price_indices.csv"
 TRADE_MATRIX_PATH = BASE_DIR / "data" / "clean_trade_matrix.csv"
 RUNNING_ON_RENDER = os.getenv("RENDER", "").lower() == "true"
-ENABLE_LSTM_MODEL = os.getenv(
-    "ENABLE_LSTM_MODEL",
-    "false" if RUNNING_ON_RENDER else "true",
-).lower() == "true"
+ENABLE_LSTM_MODEL = False
 
 app = FastAPI(title="Food Supply Chain Disruption Analyzer", version="1.0.0")
 
@@ -113,21 +110,12 @@ def get_trade_data():
         for filename in z.namelist():
             if filename.endswith('.csv'):
                 with z.open(filename) as f:
-                    # Flexible usecols to handle 'Reporter Country' or 'Reporter Countries'
                     valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
                     return pd.read_csv(
                         f, 
                         encoding='latin-1',
-                        usecols=lambda x: x in valid_cols,
-                        dtype={
-                            "Reporter Country": "category",
-                            "Reporter Countries": "category",
-                            "Partner Country": "category",
-                            "Partner Countries": "category",
-                            "Item": "category",
-                            "Element": "category"
-                            # Let 'Value' parse naturally, we coerce it to float later
-                        }
+                        usecols=lambda x: x in valid_cols
+                        # Removed dtype dictionary to prevent ValueError if a column isn't found!
                     )
     return None
 
