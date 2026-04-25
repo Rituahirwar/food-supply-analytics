@@ -93,13 +93,28 @@ def get_trade_data():
     with zipfile.ZipFile(TRADE_MATRIX_ZIP_PATH, 'r') as z:
         for filename in z.namelist():
             if filename.endswith('.csv'):
+                # Read the header first to safely determine column names
+                with z.open(filename) as header_file:
+                    header_line = header_file.readline().decode('latin-1').strip()
+                
+                # Split by comma and clean quotes
+                actual_header = [col.strip('"\'') for col in header_line.split(',')]
+                
+                valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
+                cols_to_use = [c for c in actual_header if c in valid_cols]
+                
+                # Dynamically build category dtypes for extreme memory savings
+                dtype_dict = {}
+                for c in cols_to_use:
+                    if c != "Value": # Let Value parse naturally to avoid ValueError on dirty floats
+                        dtype_dict[c] = "category"
+
                 with z.open(filename) as f:
-                    valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
                     return pd.read_csv(
                         f, 
                         encoding='latin-1',
-                        usecols=lambda x: x in valid_cols
-                        # Removed dtype dictionary to prevent ValueError if a column isn't found!
+                        usecols=cols_to_use,
+                        dtype=dtype_dict
                     )
     return None
 
@@ -166,7 +181,8 @@ def predict():
         raise HTTPException(status_code=500, detail=f"Missing columns: {sorted(required_columns)}")
 
     # In-place operations avoid creating a full DataFrame copy
-    data = food_price_df
+    data = food_price_df.copy()
+    data["Date"] = pd.to_datetime(data["Date"], errors="coerce")
     for col in ["Food Price Index", "Cereals", "Oils", "Meat", "Dairy", "Sugar"]:
         data[col] = pd.to_numeric(data[col], errors="coerce")
     data = data.dropna(subset=["Date", "Food Price Index"]).sort_values("Date")
