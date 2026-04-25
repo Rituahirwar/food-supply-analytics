@@ -72,31 +72,15 @@ def normalize_country_name(value: str) -> str:
 def get_food_price_data():
     if not FOOD_PRICE_DATA_PATH.exists():
         return None
-    # Memory-optimized read: parse dates early, use float32 for numeric columns
-    return pd.read_csv(
-        FOOD_PRICE_DATA_PATH,
-        parse_dates=["Date"],
-        dtype={
-            "Food Price Index": "float32",
-            "Cereals": "float32",
-            "Oils": "float32",
-            "Meat": "float32",
-            "Dairy": "float32",
-            "Sugar": "float32",
-        }
-    )
-
+    # Flexible read: let Pandas parse normally, then we coerce later
+    return pd.read_csv(FOOD_PRICE_DATA_PATH)
 
 @lru_cache(maxsize=1)
 def get_cpi_data():
     if not CPI_DATA_PATH.exists():
         return None
-    return pd.read_csv(
-        CPI_DATA_PATH, 
-        encoding="latin-1",
-        usecols=["Area", "Date", "Value"],
-        dtype={"Area": "category"} # Let Value parse naturally
-    )
+    # Flexible read: let Pandas parse normally
+    return pd.read_csv(CPI_DATA_PATH, encoding="latin-1")
 
 
 TRADE_MATRIX_ZIP_PATH = BASE_DIR / "data" / "clean_trade_matrix.zip"
