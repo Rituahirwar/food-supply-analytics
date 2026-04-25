@@ -18,7 +18,7 @@ FOOD_PRICE_DATA_PATH = BASE_DIR / "data" / "clean_food_price_indices.csv"
 CPI_DATA_PATH = BASE_DIR / "data" / "clean_consumer_price_indices.csv"
 TRADE_MATRIX_PATH = BASE_DIR / "data" / "clean_trade_matrix.csv"
 RUNNING_ON_RENDER = os.getenv("RENDER", "").lower() == "true"
-ENABLE_LSTM_MODEL = False
+ENABLE_LSTM_MODEL = True
 
 app = FastAPI(title="Food Supply Chain Disruption Analyzer", version="1.0.0")
 
@@ -110,12 +110,17 @@ def get_trade_data():
                         dtype_dict[c] = "category"
 
                 with z.open(filename) as f:
-                    return pd.read_csv(
+                    # Use chunksize to completely eliminate the peak memory spike during parsing!
+                    chunks = []
+                    for chunk in pd.read_csv(
                         f, 
                         encoding='latin-1',
                         usecols=cols_to_use,
-                        dtype=dtype_dict
-                    )
+                        dtype=dtype_dict,
+                        chunksize=50000
+                    ):
+                        chunks.append(chunk)
+                    return pd.concat(chunks, ignore_index=True)
     return None
 
 
