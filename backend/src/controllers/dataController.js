@@ -20,17 +20,16 @@ const getErrorMessage = (err, fallback = 'Request failed') =>
 
 const getPrediction = async (req, res) => {
   try {
-    const cached = cache.get('prediction');
-    if (cached) {
-      return res.status(200).json(cached);
+    let data = cache.get('prediction');
+    
+    if (!data) {
+      const response = await limiter.schedule(() => axios.get(`${ML_URL}/predict`));
+      data = response.data;
+      cache.set('prediction', data);
     }
 
-    const response = await limiter.schedule(() => axios.get(`${ML_URL}/predict`));
-    const data = response.data;
-
-    cache.set('prediction', data);
-
     try {
+      // Save history for whoever requested it, regardless of cache hit
       await PredictionLog.create({
         user_id: req.user.id,
         current_price: data.current_prices?.food_price_index,
