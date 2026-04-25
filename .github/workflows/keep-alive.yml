@@ -1,0 +1,26 @@
+name: Keep Render Services Alive
+
+on:
+  schedule:
+    # Run every 10 minutes (free tier spins down after 15 min inactivity)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Express Backend
+        run: |
+          echo "Pinging Express backend..."
+          curl -sf https://food-backend-aox6.onrender.com/health || echo "Express backend ping failed"
+      
+      - name: Ping ML Service
+        run: |
+          echo "Pinging ML service..."
+          curl -sf https://food-supply-analytics-1.onrender.com/health || echo "ML service ping failed"
+      
+      - name: Ping Frontend
+        run: |
+          echo "Pinging frontend..."
+          curl -sf -o /dev/null https://food-supply-analytics-4jcofha64-ritus-projects-bfccb7e6.vercel.app || echo "Frontend ping failed"
