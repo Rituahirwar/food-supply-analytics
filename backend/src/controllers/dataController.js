@@ -8,6 +8,9 @@ const limiter = new Bottleneck({ maxConcurrent: 15 });
 
 const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 
+// Axios instance with timeout so Render doesn't 502 before we respond
+const mlAxios = axios.create({ timeout: 15000, headers: { 'Accept': 'application/json' } });
+
 const warnLogFailure = (label, err) => {
   console.warn(`${label} log skipped: ${err.message}`);
 };
@@ -23,7 +26,7 @@ const getPrediction = async (req, res) => {
     let data = cache.get('prediction');
     
     if (!data) {
-      const response = await limiter.schedule(() => axios.get(`${ML_URL}/predict`));
+      const response = await limiter.schedule(() => mlAxios.get(`${ML_URL}/predict`));
       data = response.data;
       cache.set('prediction', data);
     }
@@ -91,7 +94,7 @@ const getRisk = async (req, res) => {
       ? `${ML_URL}/risk?year=${year}`
       : `${ML_URL}/risk`;
 
-    const response = await limiter.schedule(() => axios.get(mlUrl));
+    const response = await limiter.schedule(() => mlAxios.get(mlUrl));
     const data = response.data;
 
     cache.set(cacheKey, data);
@@ -138,7 +141,7 @@ const getFoodPrices = async (req, res) => {
   try {
     const commodity = req.query.commodity || 'Cereals';
     const response = await limiter.schedule(() =>
-      axios.get(`${ML_URL}/food-prices?commodity=${encodeURIComponent(commodity)}`)
+      mlAxios.get(`${ML_URL}/food-prices?commodity=${encodeURIComponent(commodity)}`)
     );
     res.status(200).json(response.data);
   } catch (err) {
@@ -159,7 +162,7 @@ const getTradeData = async (req, res) => {
     }
 
     const response = await limiter.schedule(() =>
-      axios.get(
+      mlAxios.get(
         `${ML_URL}/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`
       )
     );
