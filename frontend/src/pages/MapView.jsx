@@ -165,11 +165,12 @@ const MapView = ({
     if (selectedYear) setLocalYear(selectedYear);
   }, [selectedYear]);
 
-  // Load food prices when commodity changes
   useEffect(() => {
-    getFoodPrices(selectedCommodity || "Cereals").then((data) => {
-      if (data?.data) setFoodPriceData(data.data);
-    });
+    getFoodPrices(selectedCommodity || "Cereals")
+      .then((data) => {
+        if (data?.data) setFoodPriceData(data.data);
+      })
+      .catch((err) => console.warn("Failed to load food prices:", err));
   }, [selectedCommodity]);
 
   // Initial risk load
@@ -194,8 +195,9 @@ const MapView = ({
           if (setSelectedYear) setSelectedYear(defaultYear);
         }
       }
-      setLoading(false);
-    });
+    })
+    .catch((err) => console.warn("Failed to load initial risk:", err))
+    .finally(() => setLoading(false));
   }, []);
 
   // Refetch risk on year change
@@ -212,8 +214,9 @@ const MapView = ({
         setRiskData(map);
         setMapKey((prev) => prev + 1);
       }
-      setLoading(false);
-    });
+    })
+    .catch((err) => console.warn("Failed to load risk for year:", err))
+    .finally(() => setLoading(false));
   }, [selectedYear]);
 
   // Refetch trade routes when country or commodity changes
