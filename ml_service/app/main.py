@@ -106,7 +106,13 @@ def get_trade_data():
                         chunksize=50000
                     ):
                         chunks.append(chunk)
-                    return pd.concat(chunks, ignore_index=True)
+                    df = pd.concat(chunks, ignore_index=True)
+                    df.columns = df.columns.str.strip()
+                    df = df.rename(columns={
+                        "Reporter Countries": "Reporter Country",
+                        "Partner Countries": "Partner Country"
+                    })
+                    return df
     return None
 
 
