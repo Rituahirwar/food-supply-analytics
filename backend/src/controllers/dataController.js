@@ -4,7 +4,7 @@ const Bottleneck = require('bottleneck');
 const { PredictionLog, QueryLog, RiskAlertLog } = require('../models/SupplyData');
 
 const cache = new NodeCache({ stdTTL: 300 });
-const limiter = new Bottleneck({ maxConcurrent: 15 });
+const limiter = new Bottleneck({ maxConcurrent: 5 });
 
 const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 
@@ -161,11 +161,19 @@ const getTradeData = async (req, res) => {
       return res.status(400).json({ message: 'country is required' });
     }
 
+    const cacheKey = `trade_${country}_${commodity}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const response = await limiter.schedule(() =>
       mlAxios.get(
         `${ML_URL}/trade?country=${encodeURIComponent(country)}&commodity=${encodeURIComponent(commodity)}`
       )
     );
+    
+    cache.set(cacheKey, response.data);
     res.status(200).json(response.data);
   } catch (err) {
     console.error('[getTradeData ERROR]', err.message, err.code || '');

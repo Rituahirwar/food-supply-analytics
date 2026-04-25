@@ -1,6 +1,7 @@
 from functools import lru_cache
 import os
 from pathlib import Path
+import threading
 from typing import Optional
 
 import numpy as np
@@ -29,6 +30,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_food_lock = threading.Lock()
+_cpi_lock = threading.Lock()
+_trade_lock = threading.Lock()
 
 COMMODITY_ITEM_MAP = {
     "Cereals": ["Breakfast cereals", "Rice, paddy (rice milled equivalent)", "Rice, milled", "Wheat and meslin flour", "Uncooked pasta, not stuffed or otherwise prepared"],
@@ -69,24 +74,32 @@ def normalize_country_name(value: str) -> str:
 
 
 @lru_cache(maxsize=1)
-def get_food_price_data():
+def _load_food_price_data():
     if not FOOD_PRICE_DATA_PATH.exists():
         return None
     # Flexible read: let Pandas parse normally, then we coerce later
     return pd.read_csv(FOOD_PRICE_DATA_PATH)
 
+def get_food_price_data():
+    with _food_lock:
+        return _load_food_price_data()
+
 @lru_cache(maxsize=1)
-def get_cpi_data():
+def _load_cpi_data():
     if not CPI_DATA_PATH.exists():
         return None
     # Flexible read: let Pandas parse normally
     return pd.read_csv(CPI_DATA_PATH, encoding="latin-1")
 
+def get_cpi_data():
+    with _cpi_lock:
+        return _load_cpi_data()
+
 
 TRADE_MATRIX_ZIP_PATH = BASE_DIR / "data" / "clean_trade_matrix.zip"
 
 @lru_cache(maxsize=1)
-def get_trade_data():
+def _load_trade_data():
     if not TRADE_MATRIX_ZIP_PATH.exists():
         return None
     import zipfile
@@ -112,8 +125,18 @@ def get_trade_data():
                         "Reporter Countries": "Reporter Country",
                         "Partner Countries": "Partner Country"
                     })
+                    
+                    # Convert string columns to categorical to save RAM
+                    for col in ["Reporter Country", "Partner Country", "Item", "Element"]:
+                        if col in df.columns:
+                            df[col] = df[col].astype("category")
+                            
                     return df
     return None
+
+def get_trade_data():
+    with _trade_lock:
+        return _load_trade_data()
 
 
 @lru_cache(maxsize=1)
@@ -465,4 +488,3 @@ def trade(country: str = Query(...), commodity: str = Query(default="Cereals")):
         "imports": imports.rename(columns={"Partner Country": "partner", "Value": "value"}).to_dict(orient="records"),
         "exports": exports.rename(columns={"Partner Country": "partner", "Value": "value"}).to_dict(orient="records"),
     }
-
