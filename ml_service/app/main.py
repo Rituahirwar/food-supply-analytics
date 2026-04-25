@@ -98,7 +98,7 @@ def get_cpi_data():
         CPI_DATA_PATH, 
         encoding="latin-1",
         usecols=["Area", "Date", "Value"],
-        dtype={"Area": "category", "Value": "float32"}
+        dtype={"Area": "category"} # Let Value parse naturally
     )
 
 
@@ -113,17 +113,20 @@ def get_trade_data():
         for filename in z.namelist():
             if filename.endswith('.csv'):
                 with z.open(filename) as f:
-                    # Optimize memory usage by reading only necessary columns and using categories
+                    # Flexible usecols to handle 'Reporter Country' or 'Reporter Countries'
+                    valid_cols = {"Reporter Country", "Reporter Countries", "Partner Country", "Partner Countries", "Item", "Element", "Value"}
                     return pd.read_csv(
                         f, 
                         encoding='latin-1',
-                        usecols=["Reporter Country", "Partner Country", "Item", "Element", "Value"],
+                        usecols=lambda x: x in valid_cols,
                         dtype={
                             "Reporter Country": "category",
+                            "Reporter Countries": "category",
                             "Partner Country": "category",
+                            "Partner Countries": "category",
                             "Item": "category",
-                            "Element": "category",
-                            "Value": "float32"
+                            "Element": "category"
+                            # Let 'Value' parse naturally, we coerce it to float later
                         }
                     )
     return None
