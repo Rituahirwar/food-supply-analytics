@@ -4,7 +4,7 @@ const Bottleneck = require('bottleneck');
 const { PredictionLog, QueryLog, RiskAlertLog } = require('../models/SupplyData');
 
 const cache = new NodeCache({ stdTTL: 300 });
-const limiter = new Bottleneck({ maxConcurrent: 1 });
+const limiter = new Bottleneck({ maxConcurrent: 15 });
 
 const ML_URL = process.env.ML_SERVICE_URL || 'https://food-supply-analytics-1.onrender.com';
 
