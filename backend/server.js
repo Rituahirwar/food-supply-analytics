@@ -64,4 +64,20 @@ app.use('/api/data', dataRoutes);
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'express_backend', ml_url: ML_URL }));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
+  
+  // --- KEEP AWAKE HACK FOR RENDER FREE TIER ---
+  // Ping the ML service every 10 minutes (600000 ms) so it never goes to sleep.
+  setInterval(() => {
+    console.log('[KEEP-AWAKE] Pinging ML service to prevent sleep...');
+    axios.get(`${ML_URL}/health`, { timeout: 10000 })
+      .catch(err => console.error('[KEEP-AWAKE] ML service ping failed:', err.message));
+      
+    // If the backend has an external URL, ping itself too
+    const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+    if (SELF_URL) {
+      axios.get(`${SELF_URL}/health`, { timeout: 10000 }).catch(() => {});
+    }
+  }, 10 * 60 * 1000);
+});
