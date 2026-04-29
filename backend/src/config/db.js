@@ -29,6 +29,16 @@ const connectPostgres = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync({ alter: true });
+    
+    // Enable Row-Level Security on the Users table to fix Supabase security warnings
+    // This blocks public Data API access but allows Sequelize to work normally using the connection string.
+    try {
+      await sequelize.query('ALTER TABLE "Users" ENABLE ROW LEVEL SECURITY;');
+      console.log('Row-Level Security enabled on Users table');
+    } catch (rlsErr) {
+      console.error('Could not enable RLS on Users table:', rlsErr.message);
+    }
+
     console.log('PostgreSQL connected');
   } catch (err) {
     console.error('PostgreSQL error:', err.message);
